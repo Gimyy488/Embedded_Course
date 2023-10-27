@@ -1,0 +1,33 @@
+/*
+ * TIMER_int.h
+ *
+ *  Created on: Oct 15, 2023
+ *      Author: Omar Gamal El-Kady
+ */
+
+#ifndef MCAL_TIMER_TIMER_INT_H_
+#define MCAL_TIMER_TIMER_INT_H_
+
+ES_t TIMER_enuInit(void);
+
+ES_t TIMER_enuAsyncDelayms(u8 Copy_u8IntPin , u16 Copy_u6DelayTime);
+
+ES_t TIEMR_enuInterruptEnable(u8 Copy_u8Intpin);
+
+ES_t TIEMR_enuInterruptDisable(u8 Copy_u8Intpin);
+
+ES_t TIMER_enuOCEnable(u8 Copy_u8IntPin);
+
+ES_t TIMER_enuOCDisable(u8 Copy_u8IntPin);
+
+ES_t TIMER_enuOVFEnable(u8 Copy_u8IntPin);
+
+ES_t TIMER_enuOVFDisable(u8 Copy_u8IntPin);
+
+//ES_t TIMER_enuEnable(u8 Copy_IntPin);
+
+ES_t TIMER_enuDisable(u8 Copy_u8Intpin);
+
+ES_t TIMER_enuSetCallBack(void(* Copy_pfuncAppFunc)(void*),void * Copy_pvidParameter);
+
+#endif /* MCAL_TIMER_TIMER_INT_H_ */

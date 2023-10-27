@@ -1,0 +1,42 @@
+22:50:21 **** Incremental Build of configuration Debug for project Linking_Time_Layered_Arch ****
+make all 
+Building file: ../APP/Animation/Animation.prog.c
+Invoking: AVR Compiler
+avr-gcc -Wall -g2 -gstabs -O0 -fpack-struct -fshort-enums -ffunction-sections -fdata-sections -std=gnu99 -funsigned-char -funsigned-bitfields -mmcu=atmega32 -DF_CPU=16000000UL -MMD -MP -MF"APP/Animation/Animation.prog.d" -MT"APP/Animation/Animation.prog.o" -c -o "APP/Animation/Animation.prog.o" "../APP/Animation/Animation.prog.c"
+In file included from ../APP/Animation/Animation.prog.c:11:
+e:/amit course/microcontroller_n_microprocessor_tools_n_work/eclipse/sdk_win_64/winavr/lib/gcc/../../avr/include/util/delay.h:90:3: warning: #warning "Compiler optimizations disabled; functions from <util/delay.h> won't work as designed"
+../APP/Animation/Animation.prog.c: In function 'Animation_enuInit':
+../APP/Animation/Animation.prog.c:30: warning: unused variable 'Local_au8DeadPerson'
+Finished building: ../APP/Animation/Animation.prog.c
+ 
+Building target: Linking_Time_Layered_Arch.elf
+Invoking: AVR C Linker
+avr-gcc -Wl,-Map,Linking_Time_Layered_Arch.map -mmcu=atmega32 -o "Linking_Time_Layered_Arch.elf"  ./MCAL/DIO/DIO_prog.o  ./HAL/Switch/Switch_config.o ./HAL/Switch/Switch_prog.o  ./HAL/Led/Led_config.o ./HAL/Led/Led_prog.o  ./HAL/Lcd/Lcd_prog.o  ./HAL/HexaDecoder/HexaDecoder_prog.o  ./HAL/Buzzer/Buzzer_prog.o  ./APP/TrafficLight/TrafficLight_prog.o  ./APP/POV/POV_prog.o  ./APP/Animation/Animation.prog.o  ./main.o   
+Finished building target: Linking_Time_Layered_Arch.elf
+ 
+Invoking: AVR Create Extended Listing
+avr-objdump -h -S Linking_Time_Layered_Arch.elf  >"Linking_Time_Layered_Arch.lss"
+Finished building: Linking_Time_Layered_Arch.lss
+ 
+Create Flash image (ihex format)
+avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex Linking_Time_Layered_Arch.elf  "Linking_Time_Layered_Arch.hex"
+Finished building: Linking_Time_Layered_Arch.hex
+ 
+Invoking: Print Size
+avr-size --format=avr --mcu=atmega32 Linking_Time_Layered_Arch.elf
+AVR Memory Usage
+----------------
+Device: atmega32
+
+Program:   12264 bytes (37.4% Full)
+(.text + .data + .bootloader)
+
+Data:        328 bytes (16.0% Full)
+(.data + .bss + .noinit)
+
+
+Finished building: sizedummy
+ 
+
+22:50:22 Build Finished (took 596ms)
+

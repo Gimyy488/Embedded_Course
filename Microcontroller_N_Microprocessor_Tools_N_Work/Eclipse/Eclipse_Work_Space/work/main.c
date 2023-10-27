@@ -1,0 +1,13 @@
+/*
+ * main.c
+ *
+ *  Created on: Oct 20, 2023
+ *      Author: Omar Gamal El-Kady
+ */
+
+int main(){
+
+
+	while(1);
+	//return 0;
+}

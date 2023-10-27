@@ -1,0 +1,628 @@
+/*
+ * main.c
+ *
+ *  Created on: Sep 26, 2023
+ *      Author: LENOVO
+ */
+
+//utilities
+#include <util\delay.h>
+
+// LIB
+#include "LIB/stdTypes.h"
+#include "LIB/errorState.h"
+
+//MCAL
+#include "MCAL/DIO/DIO_int.h"
+#include "MCAL/EXTI/EXTI_int.h"
+#include "MCAL/ADC/ADC_int.h"
+#include "MCAL/TIMER/TIMER_int.h"
+#include "MCAL/GIE/GIE_int.h"
+
+
+//HAL
+#include "HAL/Switch/Switch_int.h"
+#include "HAL/Led/Led_int.h"
+#include "HAL/Buzzer/Buzzer_int.h"
+#include "HAL/Lcd/lcd_int.h"
+#include "HAL/Keypad/Keypad_int.h"
+
+//APP
+#include "APP/POV/POV_int.h"
+#include "APP/TrafficLight/TrafficLight_int.h"
+#include "APP/Animation/Animation_int.h"
+#include "APP/LoginSystem/LoginSystem_int.h"
+#include "APP/Calculator/Calculator_int.h"
+
+
+/*struct strFuncParameter{
+
+	BOOL flag;
+	u8 cycles;
+};
+
+
+void vidISRFunc(void * Copy_pvidFuncParameters){
+
+	struct strFuncParameter * Local_pstrFuncParameter = (struct strFuncParamter *) Copy_pvidFuncParameters;
+	Local_pstrFuncParameter->flag = true;
+	TIMER_enuGetTimerCounts(TIMER_INT0,&Local_pstrFuncParameter->cycles);
+}
+
+int main(void){
+
+	DIO_enuSetPinDirection(DIO_GROUP_B,DIO_PIN_1,1);
+	DIO_enuSetPinDirection(DIO_GROUP_B,DIO_PIN_3,1);
+	struct strFuncParameter Local_strFuncParameter = {false,0};
+	u16 count = 0;
+	TIMER_enuInit();
+	TIMER_enuSetCallBack(vidISRFunc,&Local_strFuncParameter);
+	GIE_vidEnable();
+	TIMER_enuSetOCRValue(0,9);
+	Led_enuInit();
+	while(1){
+
+		if(Local_strFuncParameter.flag == true){
+			Lcd_enuSendCommand(LCD_CLEAR_DISPLAY);
+			Led_enuLedTurnON(LED_GREEN_ID);
+			Lcd_enuWriteIntegarNum(Local_strFuncParameter.cycles);
+			Local_strFuncParameter.flag = false;
+		}
+	}
+
+	return 0;
+}*/
+
+
+
+
+struct strFuncParameter{
+
+	BOOL flag;
+};
+
+void vidISRFunc(void * Copy_pvidFuncParameters){
+
+	struct strFuncParameter * Local_pstrFuncParameter = (struct strFuncParamter *) Copy_pvidFuncParameters;
+	Local_pstrFuncParameter->flag = true;
+	//TIMER_enuGetTimerCounts(TIMER_INT0,&Local_pstrFuncParameter->cycles);
+}
+
+int main(void){
+
+	DIO_enuSetPinDirection(DIO_GROUP_B,DIO_PIN_0,DIO_OUTPUT);
+	struct strFuncParameter Local_strFuncParameter = {false,0};
+	TIMER_enuInit();
+	Lcd_enuInit();
+	Led_enuInit();
+	Lcd_enuSendCommand(LCD_CURSOR_OFF);
+	Lcd_enuSendString("LED : ");
+	TIMER_enuSetCallBack(vidISRFunc,&Local_strFuncParameter);
+	GIE_vidEnable();
+	TIMER_enuSetOCRValue(0,9);
+
+	while(1){
+
+		if(Local_strFuncParameter.flag == true){
+				//Lcd_enuSendCommand(LCD_CLEAR_DISPLAY);
+				Led_enuLedToggle(LED_GREEN_ID);
+				Lcd_enuSetCursor(LCD_ROW_1,LCD_COLUMN_7);
+				Lcd_enuSendString("ON , ");
+				Local_strFuncParameter.flag = false;
+		}
+
+	}
+
+	return 0;
+}
+
+
+/*struct strFuncParameter{
+
+	BOOL flag;
+};
+
+
+void vidISRFunc(void * Copy_pvidFuncParameters){
+	struct strFuncParameter * Local_pstrFuncParameter = (struct strFuncParamter *) Copy_pvidFuncParameters;
+	Led_enuLedToggle(LED_RED_ID);
+	Local_pstrFuncParameter->flag = true;
+
+}
+
+
+int main(void){
+
+	struct strFuncParameter Local_strFuncParameter = {false};
+
+	TIMER_enuInit();
+	Led_enuInit();
+	TIMER_enuOVFEnable(TIMER_INT0);
+	TIMER_enuSetCallBack(vidISRFunc,&Local_strFuncParameter);
+	GIE_vidEnable();
+	TIMER_enuAsyncDelayms(TIMER_INT0,2000);
+	Led_enuLedToggle(LED_GREEN_ID);
+
+	while(1){
+
+		if(Local_strFuncParameter.flag == true){
+
+			Led_enuLedToggle(LED_GREEN_ID);
+			Local_strFuncParameter.flag = false;
+		}
+
+	}
+
+	return 0;
+}*/
+
+
+/*int main(void){
+
+	TIMER_enuInit();
+	Led_enuInit();
+	GIE_vidEnable();
+
+	while(1){
+
+		TIMER_enuSyncDelayms(TIMER_INT0,4000);
+		Led_enuLedToggle(LED_GREEN_ID);
+		TIMER_enuSyncDelayms(TIMER_INT0,4000);
+		Led_enuLedToggle(LED_GREEN_ID);
+	}
+
+	return 0;
+}*/
+
+
+/*int main(void){
+
+	POV_enuInit();
+
+	u8 Local_u8NumIter;
+	u8 Local_u8WaitTime;
+
+	for(Local_u8NumIter = 0 ; Local_u8NumIter < 100 ; Local_u8NumIter++){
+
+		for(Local_u8WaitTime = 0 ; Local_u8WaitTime < 20 ; Local_u8WaitTime++){
+
+			POV_enuDisplayNum(Local_u8NumIter);
+		}
+
+	}
+
+	return 0;
+}*/
+
+
+
+/*int main(void){
+
+	LoginSystem_enuInit();
+	BOOL Local_bPass;
+	LoginSystem_enuWelcomePage();
+	LoginSystem_enuEnterPassPage(&Local_bPass);
+	if(Local_bPass == true){
+		LoginSystem_enuMainDashBoard();
+	}
+
+	return 0;
+}*/
+
+
+
+/*struct strFuncParameter{
+
+	u8 grp;
+	u8 pin;
+};
+
+
+void vidISRFunc(void * Copy_pvidFuncParameters){
+	struct strFuncParameter * Local_pstrFuncParameter = (struct strFuncParameter *) Copy_pvidFuncParameters;
+	DIO_enuTogglePinValue(Local_pstrFuncParameter->grp,Local_pstrFuncParameter->pin);
+}
+
+
+int main(void){
+
+	DIO_enuSetPinDirection(DIO_GROUP_D,DIO_PIN_2,DIO_INPUT);
+	DIO_enuSetPinValue(DIO_GROUP_D,DIO_PIN_2,DIO_FLOAT);
+
+	DIO_enuSetPinDirection(DIO_GROUP_C,DIO_PIN_7,DIO_OUTPUT);
+    EXTI_enuInit();
+
+    struct strFuncParameter Local_strFuncParameter = {DIO_GROUP_C,DIO_PIN_7};
+
+
+    EXTI_enuSetCallBack(EXTI_INT0,vidISRFunc,&Local_strFuncParameter);
+	GIE_vidEnable();
+	while(1);
+		//Lcd_enuInit();
+
+	return 0;
+}*/
+
+
+
+
+
+
+/*struct strFuncParameter{
+	u16 readings;
+	u8 grp;
+	u8 pin;
+	BOOL flag;
+};
+
+void vidISRFunc(void * Copy_pvidFuncParameters){
+
+	struct strFuncParameter * Local_pstrFuncParameter = (struct strFuncParameter *) Copy_pvidFuncParameters;
+	ADC_enuReadInterrupt(&(Local_pstrFuncParameter->readings));
+	Local_pstrFuncParameter->flag = true;
+	DIO_enuTogglePinValue(Local_pstrFuncParameter->grp,Local_pstrFuncParameter->pin);
+
+}
+
+int main(void){
+
+	DIO_enuSetPinDirection(DIO_GROUP_A,DIO_PIN_1,DIO_INPUT);
+	DIO_enuSetPinValue(DIO_GROUP_A,DIO_PIN_1,DIO_FLOAT);
+
+	DIO_enuSetPinDirection(DIO_GROUP_D,DIO_PIN_2,DIO_INPUT);
+	DIO_enuSetPinValue(DIO_GROUP_D,DIO_PIN_2,DIO_FLOAT);
+
+	DIO_enuSetPinDirection(DIO_GROUP_C,DIO_PIN_7,DIO_OUTPUT);
+
+	ADC_enuInit();
+	EXTI_enuInit();
+	Lcd_enuInit();
+
+	Lcd_enuSendCommand(LCD_CURSOR_OFF);
+	Lcd_enuSendString("Volt = ");
+	Lcd_enuSetCursor(LCD_ROW_1,LCD_COLUMN_12);
+	Lcd_enuSendString(" mV");
+
+	ADCChannels_t Local_u8ADCChannels = ADC1;
+
+	ADC_enuSetADCChannel(ADC1);
+	ADC_enuSetIterruptMode(ADC1,ADC_INTERRUPT);
+	ADC_enuSetTriggerSource(ADC_EXTI0_TRIGGER);
+
+	struct strFuncParameter Local_strFuncParameter = {0,DIO_GROUP_C,DIO_PIN_7,false};
+	ADC_enuSetCallBack(vidISRFunc,&Local_strFuncParameter);
+
+
+
+	s32 Local_s32Volt;
+
+	ADC_enuStartConversion();
+	GIE_vidEnable();
+
+	while(1){
+
+		if(Local_strFuncParameter.flag == true){
+
+			Local_strFuncParameter.flag = false;
+			Local_s32Volt = (Local_strFuncParameter.readings * 5000LLU) / 1024;
+			Lcd_enuSetCursor(LCD_ROW_1,LCD_COLUMN_8);
+			Lcd_enuSendString("    ");
+			Lcd_enuSetCursor(LCD_ROW_1,LCD_COLUMN_8);
+			Lcd_enuWriteIntegarNum(Local_s32Volt);
+			_delay_ms(500);
+
+		}
+
+
+	}
+
+
+
+	return 0;
+}*/
+
+
+
+/*int main(void){
+
+	DIO_enuSetPinDirection(DIO_GROUP_A,DIO_PIN_1,DIO_INPUT);
+	DIO_enuSetPinValue(DIO_GROUP_A,DIO_PIN_1,DIO_FLOAT);
+
+	ADC_enuInit();
+	Lcd_enuInit();
+
+	Lcd_enuSendCommand(LCD_DISPLAY_LEFT);
+
+	Lcd_enuSendCommand(LCD_CURSOR_OFF);
+	Lcd_enuSendString("Volt = ");
+	Lcd_enuSetCursor(LCD_ROW_1,LCD_COLUMN_12);
+	Lcd_enuSendString(" mV");
+
+	ADCChannels_t Local_u8ADCChannels = ADC1;
+	u16 Local_u16ADCReading;
+	s32 Local_s32Volt;
+
+
+	while(1){
+
+		ADC_enuReadPolling(ADC1,&Local_u16ADCReading);
+		Local_s32Volt = (Local_u16ADCReading * 5000LLU) / 1024;
+		//Local_s32Volt = Local_s32Volt / 100;
+		Lcd_enuSetCursor(LCD_ROW_1,LCD_COLUMN_8);
+		Lcd_enuSendString("     ");
+		Lcd_enuSetCursor(LCD_ROW_1,LCD_COLUMN_8);
+		Lcd_enuWriteIntegarNum(Local_s32Volt);
+		_delay_ms(500);
+	}
+
+
+	return 0;
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*void func(void){
+
+	Buzzer_enuInit();
+	Buzzer_enuAlertActivator();
+	_delay_ms(2000);
+	Buzzer_enuSilenceDeactivation();
+}
+*/
+
+
+
+//int main(void){
+
+	//POV_enuInit();
+	//Switch_enuInit();
+	//EXTI_enuInit();
+	//EXTI_enuCallBack(EXTI_INT0,func);
+	//GIE_vidEnable();
+	//EXTI_enuCallBack(,func)
+
+	/*u8 i;
+
+	while(1){
+
+		for(i = 0 ; i < 100 ; i++){
+
+			for(u8 j = 0 ; j < 10 ; j++){
+
+				POV_enuDisplayNum(i);
+
+			}
+		}
+	}*/
+
+
+
+	//DIO_enuSetPinDirection(DIO_GROUP_D,DIO_PIN_2,DIO_INPUT);
+    //DIO_enuSetPinValue(DIO_GROUP_D,DIO_PIN_2,DIO_FLOAT);
+
+    //DIO_enuSetPinDirection(DIO_GROUP_C,DIO_PIN_7,DIO_OUTPUT);
+    //EXTI_enuInit();
+    //GIE_vidEnable();
+    //while(1);
+	//Lcd_enuInit();
+
+	//Lcd_enuWriteIntegarNum(-6);
+
+	//Lcd_enuWriteFloatNum(123.12);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//Calculator_enuInit();
+	//Calculator_enuPowerCalculator();
+
+	/*LoginSystem_enuInit();
+	BOOL Local_bPass;
+	LoginSystem_enuWelcomePage();
+	LoginSystem_enuEnterPassPage(&Local_bPass);
+	if(Local_bPass == true){
+		LoginSystem_enuMainDashBoard();
+	}*/
+
+	//Animation_enuInit();
+	//Animation_enuBeginAnimat();
+
+	//Lcd_enuInit();
+	//Lcd_enuSendString("Omar ");
+	//Keypad_enuInit();
+	/*u8 value;
+	while(1){
+
+		Keypad_enuGetPressedKey(&value);
+
+		if( value != KEYPAD_NOT_PRESSED){
+			Lcd_enuSendData(value);
+		}
+		else if( value == 0xCC){
+
+		}
+
+	}*/
+	//Lcd_enuWriteIntegarNum(+5+-6);
+
+	//Lcd_enuWriteFloatNum(123.12);
+	/*u8 za3bola[] = {0x0E,0x0A,0x0E,0x04,0x1F,0x15,0x0E,0x0A};
+	u8 shot[] = {0x00,0x00,0x00,0x07,0x19,0x07,0x00,0x00};
+
+	for(u8 i = 2 ; i < 16 ; i++){
+
+
+		if( i == 15){
+
+			Lcd_enuDrawSpecialChar(za3bola,LCD_PATTERN_0,LCD_PATTERN_0_BASE_ADDRESS,1,1,LCD_DISPLAY_LEFT);
+			Lcd_enuDrawSpecialChar(za3bola,LCD_PATTERN_1,LCD_PATTERN_1_BASE_ADDRESS,1,16,LCD_DISPLAY_LEFT);
+		}
+		else{
+
+			Lcd_enuDrawSpecialChar(za3bola,LCD_PATTERN_0,LCD_PATTERN_0_BASE_ADDRESS,1,1,LCD_DISPLAY_LEFT);
+			Lcd_enuDrawSpecialChar(shot,LCD_PATTERN_2,LCD_PATTERN_2_BASE_ADDRESS,1,i,LCD_DISPLAY_LEFT);
+			Lcd_enuDrawSpecialChar(za3bola,LCD_PATTERN_1,LCD_PATTERN_1_BASE_ADDRESS,1,16,LCD_DISPLAY_LEFT);
+			Lcd_enuSendCommand(0x01);
+		}
+	}*/
+
+	//Switch_enuInit();
+
+	//u8 Local_u8Switch1State , Local_u8Switch2State;
+	//BOOL Local_u8Switch1Flag = true , Local_u8Switch2Flag = true;
+	//Lcd_enuGotoPostionXY(2,1);
+	//Lcd_enuSendString("Omar Gamal El-Kady");
+
+	//Lcd_enuSendString("Omar ");
+
+	//u8 heart[] = {0x00,0x0A,0x15,0x11,0x0A,0x04,0x00,0x00};
+
+	//Lcd_enuDrawSpecialChar(heart,LCD_PATTERN_0,LCD_PATTERN_0_BASE_ADDRESS,1,5,LCD_DISPLAY_LEFT);
+	//Lcd_enuSendCommand(0x40);
+
+	//for(u8 i = 0 ; i < 8 ; i++){
+
+		//Lcd_enuSendData(heart[i]);
+	//}
+	//Lcd_enuGotoPostionXY(1,6);
+	//Lcd_enuSendData(0);
+	//Lcd_enuSendString(" Wiki");
+	//Lcd_enuSendCommand(0x01);
+
+
+	/*Lcd_enuSendCommand(0x40);
+
+
+	u8 Local_au8LcdPattern[] = {
+			0x00,0x00,0x00,0x07,0x04,0x1F,0x00,0x00,
+			0x00,0x00,0x00,0x00,0x00,0x1F,0x0A,0x0E,
+			0x00,0x00,0x00,0x00,0x00,0x01,0x07,0x0C
+	};
+
+	for(u8 iter = 0 ; iter < 24 ; iter++){
+
+		Lcd_enuSendData(Local_au8LcdPattern[iter]);
+	}
+
+	Lcd_enuGotoPostionXY(1,16);
+	Lcd_enuSendCommand(0x04);
+	Lcd_enuSendData(0);
+	Lcd_enuSendData(1);
+	Lcd_enuSendData(2);*/
+
+
+	//while(1){
+
+		/*Switch_enuGetSwitchState(SWITCH_BUTTON_1,&Local_u8Switch1State);
+		Switch_enuGetSwitchState(SWITHC_BUTTON_2,&Local_u8Switch2State);
+
+		if( (Local_u8Switch1State == SWITCH_ON) && (Local_u8Switch1Flag == true) ){
+
+			Lcd_enuSendCommand(0x18);
+			Local_u8Switch1Flag = false;
+			_delay_ms(4);
+
+		}
+		else if ( (Local_u8Switch1State == SWITCH_OFF) && (Local_u8Switch1Flag == false) ){
+
+			Local_u8Switch1Flag = true;
+		}
+		else{
+
+		}*/
+
+	//}
+
+	//Lcd_enuSendData('O');
+	//Lcd_enuSendData('O');
+
+	//Lcd_enuSendData('O');
+
+	//Lcd_enuSendData('O');
+
+	//Lcd_enuSendString("Wiki");
+	//Led_enuInit();
+	//Switch_enuInit();
+
+	/*TrafficLight_enuInit();
+	while(1){
+
+		TrafficLight_enuTrafficON();
+	}*/
+	//TrafficLight_enuTrafficON();
+	//POV_enuInit();
+
+	//Buzzer_enuInit();
+	//Buzzer_enuAlertActivator();
+	//_delay_ms(1000);
+//	Buzzer_enuSilenceDeactivation();
+	//while(1){
+
+		/*u8 Local_u8PovCounter;
+
+		for(Local_u8PovCounter = 0 ; Local_u8PovCounter < 100 ; Local_u8PovCounter++){
+
+			for(u8 wait = 0 ; wait < 10 ; wait++){
+
+				POV_enuDisplayNum(Local_u8PovCounter);
+			}
+
+
+		}*/
+
+
+		/*u8 Local_u8TrafficStatus;
+		TrafficLight_enuTrafficStatus(&Local_u8TrafficStatus);
+
+		if( Local_u8TrafficStatus == TRAFFIC_ON ){
+
+			TrafficLight_enuTrafficON();
+		}
+		else{
+
+			TrafficLight_enuTrafficOFF();
+		}*/
+
+		/*u8 Local_u8LedID = 1;
+		u8 Local_u8SwitchID = 2;
+		u8 Local_u8SwitchState;
+
+		Switch_enuGetSwitchState(Local_u8SwitchID,&Local_u8SwitchState);
+
+		if( Local_u8SwitchState == SWITCH_ON){
+
+			Led_enuLedTurnON(Local_u8LedID);
+			_delay_ms(10);
+		}
+		else{
+
+			Led_enuLedTurnOFF(Local_u8LedID);
+			_delay_ms(10);
+		}*/
+	//}
+
+	//return 0;
+//}

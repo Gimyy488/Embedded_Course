@@ -1,0 +1,38 @@
+08:42:37 **** Incremental Build of configuration Debug for project work ****
+make all 
+Building file: ../main.c
+Invoking: AVR Compiler
+avr-gcc -Wall -g2 -gstabs -O0 -fpack-struct -fshort-enums -ffunction-sections -fdata-sections -std=gnu99 -funsigned-char -funsigned-bitfields -mmcu=atmega32 -DF_CPU=16000000UL -MMD -MP -MF"main.d" -MT"main.o" -c -o "main.o" "../main.c"
+Finished building: ../main.c
+ 
+Building target: work.elf
+Invoking: AVR C Linker
+avr-gcc -Wl,-Map,work.map -mmcu=atmega32 -o "work.elf"  ./main.o   
+Finished building target: work.elf
+ 
+Invoking: AVR Create Extended Listing
+avr-objdump -h -S work.elf  >"work.lss"
+Finished building: work.lss
+ 
+Create Flash image (ihex format)
+avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex work.elf  "work.hex"
+Finished building: work.hex
+ 
+Invoking: Print Size
+avr-size --format=avr --mcu=atmega32 work.elf
+AVR Memory Usage
+----------------
+Device: atmega32
+
+Program:     122 bytes (0.4% Full)
+(.text + .data + .bootloader)
+
+Data:          0 bytes (0.0% Full)
+(.data + .bss + .noinit)
+
+
+Finished building: sizedummy
+ 
+
+08:42:38 Build Finished (took 671ms)
+

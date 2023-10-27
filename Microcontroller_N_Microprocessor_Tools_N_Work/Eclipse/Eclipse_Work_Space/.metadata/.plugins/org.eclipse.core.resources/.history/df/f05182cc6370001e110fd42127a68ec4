@@ -1,0 +1,646 @@
+/*
+ * TIMER_prog.c
+ *
+ *  Created on: Oct 15, 2023
+ *      Author: Omar Gamal El-Kady
+ */
+
+
+// public lib
+#include "../../LIB/stdTypes.h"
+#include "../../LIB/errorState.h"
+
+// lower lib
+
+// my own lib
+#include "TIMER_priv.h"
+#include "TIMER_config.h"
+#include "../DIO/DIO_int.h"
+
+
+static pfuncISRFunc_t LOC_pISRFunc;
+
+static vidptr_t LOC_pISRFuncParameters;
+
+extern u8 TIMER_u8PinNum;
+
+extern TIMER_t TIMER_astrTimerConfig[];
+
+static u16 LOC_u16OVF , LOC_u16Counts ;
+static u8 LOC_u8Preload;
+
+ES_t TIMER_enuInit(void){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	u8 Local_u8Iter;
+
+	for(Local_u8Iter = 0 ; Local_u8Iter < TIMER_u8PinNum ; Local_u8Iter++){
+
+		enuSetWaveGenMode(TIMER_astrTimerConfig[Local_u8Iter].timerpin,TIMER_astrTimerConfig[Local_u8Iter].timerwaveformmode);
+		enuSetPrescaler(TIMER_astrTimerConfig[Local_u8Iter].timerpin,TIMER_astrTimerConfig[Local_u8Iter].timerclockspeed);
+		enuSetInterruptMode(TIMER_astrTimerConfig[Local_u8Iter].timerpin,TIMER_astrTimerConfig[Local_u8Iter].timerintmode);
+		enuSetCompNonPWMMode(TIMER_astrTimerConfig[Local_u8Iter].timerpin,TIMER_astrTimerConfig[Local_u8Iter].timercompoutputmode);
+	}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuSetWaveGenMode(u8 Copy_u8IntPin , u8 Copy_u8WaveForm){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	Local_enuErrorState = enuSetWaveGenMode(Copy_u8IntPin,Copy_u8WaveForm);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timerwaveformmode = Copy_u8WaveForm;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuSetPrescaler(u8 Copy_u8IntPin , u8 Copy_u8Prescaler){
+
+	ES_t Local_enuErrorState;
+
+	Local_enuErrorState = enuSetPrescaler(Copy_u8IntPin,Copy_u8Prescaler);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed = Copy_u8Prescaler;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuSetCompNonPWMMode(u8 Copy_u8IntPin , u8 Copy_u8Mode){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	Local_enuErrorState = enuSetCompNonPWMMode(Copy_u8IntPin,Copy_u8Mode);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timercompoutputmode = Copy_u8Mode;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuSyncDelayms(u8 Copy_u8IntPin , u16 Copy_u16DelayTime){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+
+	switch(Copy_u8IntPin){
+
+	    f32 Local_f32OVFTime = (LOC_au16PrescalerValues[TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed - 1] * 256.0) / (16000);
+
+	    case TIMER_INT0 :
+	    	if(Local_f32OVFTime <= Copy_u16DelayTime){
+
+	    		enuSetWaveGenMode(TIMER_INT0,TIMER0_WAVEFORM_GEN_MODE_NORMAL);
+	    		enuSetPrescaler(TIMER_INT0,TIMER0_NO_CLK_SOURCE);
+
+	    		u16 Local_u16CyclesNum = (Copy_u16DelayTime * 16000UL) /
+	    				(LOC_au16PrescalerValues[TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed - 1]) ;
+
+	    		LOC_u16OVF = (Local_u16CyclesNum + 255) / (256);
+
+	    		u8 Local_u8PreLoad = 256 - (Local_u16CyclesNum % 256);
+
+	    		DIO_enuSetPinDirection(0,7,1);
+	    		DIO_enuSetPinValue(0,7,1);
+
+	    		LOC_u8Preload = Local_u8PreLoad;
+	    		LOC_u16Counts = LOC_u16OVF;
+	    		TIMER_TCNT0 = Local_u8PreLoad;
+
+	    		while(LOC_u16OVF != 0){
+
+	    			enuSetPrescaler(TIMER_INT0,TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed);
+
+	    			while((TIMER_TIFR & 1) != 1);
+
+	    			TIMER_TIFR |= (1<<0);
+
+	    			LOC_u16OVF--;
+	    		}
+
+	    		Local_enuErrorState = ES_OK;
+
+	    		//enuSetInterruptMode(Copy_u8IntPin,TIMER_OVFINT);
+	    	}
+	    	else if(Local_f32OVFTime > Copy_u16DelayTime){
+
+	    		enuSetWaveGenMode(TIMER_INT0,TIMER0_WAFEFORM_GEN_MODE_CTC);
+	    		enuSetPrescaler(TIMER_INT0,TIMER0_NO_CLK_SOURCE);
+
+	    		u8 Local_u8CyclesNum = (Copy_u16DelayTime * 16000UL) /
+	    				(LOC_au16PrescalerValues[TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed - 1]) ;
+
+	    		LOC_u16OVF = 1;
+	    		TIMER_OCR0 = Local_u8CyclesNum;
+
+	    		while(LOC_u16OVF != 0){
+
+	    			enuSetPrescaler(TIMER_INT0,TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed);
+
+	    			while(((TIMER_TIFR>>1) & 1) != 1);
+
+	    			TIMER_TIFR |= (1<<1);
+
+	    			LOC_u16OVF--;
+	    		}
+
+	    		Local_enuErrorState = ES_OK;
+
+	    		//enuSetInterruptMode(Copy_u8IntPin,TIMER_OCINT);
+
+	    	}
+	    	else{}
+	    	break;
+
+	    case TIMER_INT1 :
+	    	break;
+
+	    default:
+	    	Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	break;
+	}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuAsyncDelayms(u8 Copy_u8IntPin , u16 Copy_u16DelayTime){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+
+	switch(Copy_u8IntPin){
+
+	    f32 Local_f32OVFTime = (LOC_au16PrescalerValues[TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed - 1] * 256.0) / (16000);
+
+	    case TIMER_INT0 :
+	    	if(Local_f32OVFTime <= Copy_u16DelayTime){
+
+	    		enuSetWaveGenMode(TIMER_INT0,TIMER0_WAVEFORM_GEN_MODE_NORMAL);
+
+	    		u16 Local_u16CyclesNum = (Copy_u16DelayTime * 16000UL) /
+	    				(LOC_au16PrescalerValues[TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed - 1]) ;
+
+	    		LOC_u16OVF = (Local_u16CyclesNum + 255) / (256);
+
+	    		u8 Local_u8PreLoad = 256 - (Local_u16CyclesNum % 256);
+
+	    		DIO_enuSetPinDirection(0,7,1);
+	    		DIO_enuSetPinValue(0,7,1);
+
+	    		LOC_u8Preload = Local_u8PreLoad;
+	    		LOC_u16Counts = LOC_u16OVF;
+	    		TIMER_TCNT0 = Local_u8PreLoad;
+
+	    		Local_enuErrorState = ES_OK;
+
+	    		enuSetInterruptMode(Copy_u8IntPin,TIMER_OVFINT);
+	    	}
+	    	else if(Local_f32OVFTime > Copy_u16DelayTime){
+
+	    		enuSetWaveGenMode(TIMER_INT0,TIMER0_WAFEFORM_GEN_MODE_CTC);
+
+	    		u8 Local_u8CyclesNum = (Copy_u16DelayTime * 16000UL) /
+	    				(LOC_au16PrescalerValues[TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed - 1]) ;
+
+	    		LOC_u16OVF = 1;
+	    		TIMER_OCR0 = Local_u8CyclesNum;
+
+	    		Local_enuErrorState = ES_OK;
+
+	    		enuSetInterruptMode(Copy_u8IntPin,TIMER_OCINT);
+
+	    	}
+	    	else{}
+	    	break;
+
+	    case TIMER_INT1 :
+	    	break;
+
+	    default:
+	    	Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	break;
+	}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuSetOCRValue(u8 Copy_u8IntPin , u16 Copy_u16Cycles){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	switch(Copy_u8IntPin){
+
+	    case TIMER_INT0 :
+	    	DIO_enuSetPinDirection(DIO_GROUP_A,1,1);
+	    	DIO_enuSetPinValue(DIO_GROUP_A,1,1);
+	    	//enuSetInterruptMode(TIMER_INT0,TIMER_POLLING);
+	    	TIMER_OCR0 = 9;
+	    	TIMER_TCNT0 = 0x00;
+	    	Local_enuErrorState = ES_OK;
+	    	//enuSetInterruptMode(TIMER_INT0,TIMER_OCINT);
+	    	break;
+	    case TIMER_INT1 :
+
+	    	break;
+	    default :
+	    	Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	break;
+	}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuGetTimerCounts(u8 Copy_u8IntPin , u16 * Copy_pu16Counts){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	switch(Copy_u8IntPin){
+
+	    case TIMER_INT0 :
+	    	if(Copy_pu16Counts != NULL){
+	    		*Copy_pu16Counts = TIMER_TCNT0;
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else{
+	    		Local_enuErrorState = ES_NULL_POINTER;
+	    	}
+	    	break;
+	    case TIMER_INT1 :
+	    	if(Copy_pu16Counts != NULL){}
+	    	else{
+	    		Local_enuErrorState = ES_NULL_POINTER;
+	    	}
+	    	break;
+	    default :
+	    	Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	break;
+	}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuOCEnable(u8 Copy_u8IntPin){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	Local_enuErrorState = enuSetInterruptMode(Copy_u8IntPin,TIMER_OCINT);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timerintmode = TIMER_OCINT;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuOCDisable(u8 Copy_u8IntPin){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	Local_enuErrorState = enuSetInterruptMode(Copy_u8IntPin,TIMER_POLLING);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timerintmode = TIMER_POLLING;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuOVFEnable(u8 Copy_u8IntPin){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	Local_enuErrorState = enuSetInterruptMode(Copy_u8IntPin,TIMER_OVFINT);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timerintmode = TIMER_OVFINT;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuOVFDisable(u8 Copy_u8IntPin){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	Local_enuErrorState = enuSetInterruptMode(Copy_u8IntPin,TIMER_POLLING);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timerintmode = TIMER_POLLING;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuInterruptDisable(u8 Copy_u8IntPin){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	Local_enuErrorState = enuSetInterruptMode(Copy_u8IntPin,TIMER_POLLING);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timerintmode = TIMER_POLLING;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuDisable(u8 Copy_u8IntPin){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	Local_enuErrorState = enuSetPrescaler(Copy_u8IntPin,TIMER0_NO_CLK_SOURCE);
+
+	if(Local_enuErrorState == ES_OK){
+
+		TIMER_astrTimerConfig[Copy_u8IntPin].timerclockspeed = TIMER0_NO_CLK_SOURCE;
+	}
+	else{}
+
+	return Local_enuErrorState;
+}
+
+ES_t TIMER_enuSetCallBack(void(* Copy_pfuncAppFunc)(void*),void * Copy_pvidParameter){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	if((Copy_pfuncAppFunc != NULL) && (Copy_pvidParameter != NULL)){
+
+		LOC_pISRFunc = Copy_pfuncAppFunc;
+		LOC_pISRFuncParameters = Copy_pvidParameter;
+		Local_enuErrorState = ES_OK;
+	}
+	else{
+
+		Local_enuErrorState = ES_NULL_POINTER;
+	}
+
+	return Local_enuErrorState;
+}
+
+ES_t enuSetWaveGenMode(u8 Copy_u8IntPin , u8 Copy_u8IntMode){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+
+	switch(Copy_u8IntPin){
+
+	    case TIMER_INT0 :
+	    	TIMER_TCCR0 &= 0xB7;
+	    	if(Copy_u8IntMode == TIMER0_WAVEFORM_GEN_MODE_NORMAL){
+		    	TIMER_TCCR0 &= 0xB7;
+		    	Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8IntMode == TIMER0_WAFEFORM_GEN_MODE_PWM){
+	    		TIMER_TCCR0 |= 0x40;
+		    	Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8IntMode == TIMER0_WAFEFORM_GEN_MODE_CTC){
+	    		TIMER_TCCR0 |= 0x08;
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8IntMode == TIMER0_WAFEFORM_GEN_MODE_FASTPWM){
+	    		TIMER_TCCR0 |= 0x48;
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else{
+
+	    		Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	}
+	    	break;
+	    case TIMER_INT1 :
+	    	break;
+	    case TIMER_INT2 :
+	    	break;
+	    default :
+	    	Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	break;
+	}
+
+	return Local_enuErrorState;
+}
+
+ES_t enuSetPrescaler(u8 Copy_u8IntPin , u8 Copy_u8Prescaler){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	switch(Copy_u8IntPin){
+
+		case TIMER_INT0 :
+
+			TIMER_TCCR0 &= 0xF8;
+		    if(Copy_u8Prescaler == TIMER0_NO_CLK_SOURCE){
+			    TIMER_TCCR0 &= 0xF8;
+			    Local_enuErrorState = ES_OK;
+		    }
+		    else if(Copy_u8Prescaler == TIMER0_PRESCALER_1){
+		    	TIMER_TCCR0 |= 0x01;
+			    Local_enuErrorState = ES_OK;
+		    }
+		    else if(Copy_u8Prescaler == TIMER0_PRESCALER_8){
+		    	TIMER_TCCR0 |= 0x02;
+		    	Local_enuErrorState = ES_OK;
+		    }
+		    else if(Copy_u8Prescaler == TIMER0_PRESCALER_64){
+		    	TIMER_TCCR0 |= 0x03;
+		    	Local_enuErrorState = ES_OK;
+		    }
+		    else if(Copy_u8Prescaler == TIMER0_PRESCALER_256){
+		    	TIMER_TCCR0 |= 0x04;
+		    	Local_enuErrorState = ES_OK;
+		    }
+		    else if(Copy_u8Prescaler == TIMER0_PRESCALER_1024){
+		    	TIMER_TCCR0 |= 0x05;
+		    	Local_enuErrorState = ES_OK;
+		    }
+		    else if(Copy_u8Prescaler == TIMER0_EXT_CLK_FALLING){
+		    	TIMER_TCCR0 |= 0x06;
+		    	Local_enuErrorState = ES_OK;
+		    }
+		    else if(Copy_u8Prescaler == TIMER0_EXT_CLK_RISING){
+		    	TIMER_TCCR0 |= 0x07;
+		    	Local_enuErrorState = ES_OK;
+		    	DIO_enuSetPinDirection(0,0,1);
+		    	DIO_enuSetPinValue(0,0,1);
+		    }
+		    else{
+		    	Local_enuErrorState = ES_OUT_OF_RANGE;
+		    }
+		    break;
+		case TIMER_INT1 :
+		    break;
+		case TIMER_INT2 :
+		    break;
+		default :
+		    Local_enuErrorState = ES_OUT_OF_RANGE;
+		    break;
+	}
+
+	return Local_enuErrorState;
+}
+
+/*ES_t enuSetCompOutputMode(u8 Copy_u8IntPin , u8 Copy_u8CompMode){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	switch(Copy_u8IntPin){
+
+	    case TIMER_INT0 :
+	    	if(Copy_u8CompMode == ){
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8CompMode ==){
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8CompMode ==){
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8CompMode ==){
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else{
+	    		Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	}
+	    	break;
+	    case TIMER_INT1 :
+	    case TIMER_INT2 :
+	    default :
+	    	Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	break;
+
+	}
+
+	return Local_enuErrorState;
+}*/
+
+ES_t enuSetCompNonPWMMode(u8 Copy_u8IntPin , u8 Copy_u8Mode){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	switch(Copy_u8IntPin){
+
+	    case TIMER_INT0 :
+
+	    	TIMER_TCCR0 &= 0xCF;
+	    	if(Copy_u8Mode == TIMER0_COMP_OUTPUT_NON_PWM_NORMAL){
+	    		TIMER_TCCR0 &= 0xCF;
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8Mode == TIMER0_COMP_OUTPUT_NON_PWM_TOGGLE_OC2){
+	    		TIMER_TCCR0 |= 0x10;
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8Mode == TIMER0_COMP_OUTPUT_NON_PWM_CLEAR_OC2){
+	    		TIMER_TCCR0 |= 0x20;
+	    		Local_enuErrorState = ES_OK;
+	    		DIO_enuSetPinDirection(0,2,1);
+	    		DIO_enuSetPinValue(0,2,1);
+	    	}
+	    	else if(Copy_u8Mode == TIMER0_COMP_OUTPUT_NON_PWM_SET_OC2){
+	    		TIMER_TCCR0 |= 0x30;
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else{
+
+	    		Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	}
+	    	break;
+	    case TIMER_INT1 :
+	    	break;
+	    case TIMER_INT2 :
+	    	break;
+	    default :
+	    	Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	break;
+	}
+
+	return Local_enuErrorState;
+}
+
+ES_t enuSetInterruptMode(u8 Copy_u8IntPin , u8 Copy_u8IntMode){
+
+	ES_t Local_enuErrorState = ES_NOK;
+
+	switch(Copy_u8IntPin){
+
+	    case TIMER_INT0 :
+
+	    	TIMER_TIMSK &= 0xFC;
+	    	if(Copy_u8IntMode == TIMER_POLLING){
+	    		TIMER_TIMSK &= 0xFC;
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8IntMode == TIMER_OVFINT){
+	    		TIMER_TIMSK |= 0x01;
+	    		Local_enuErrorState = ES_OK;
+	    	}
+	    	else if(Copy_u8IntMode == TIMER_OCINT){
+	    		TIMER_TIMSK |= 0x02;
+	    		Local_enuErrorState = ES_OK;
+	    		DIO_enuSetPinDirection(0,2,1);
+	    		DIO_enuSetPinValue(0,2,1);
+	    	}
+	    	else{
+
+	    		Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	}
+	    	break;
+	    case TIMER_INT1 :
+	    	break;
+	    case TIMER_INT2 :
+	    	break;
+	    default :
+	    	Local_enuErrorState = ES_OUT_OF_RANGE;
+	    	break;
+	}
+
+	return Local_enuErrorState;
+}
+
+void __vector_10(void)__attribute__((signal));
+void __vector_11(void)__attribute__((signal));
+
+void __vector_10(void){
+
+	DIO_enuSetPinDirection(DIO_GROUP_B,6,1);
+	DIO_enuSetPinValue(DIO_GROUP_B,6,1);
+	LOC_pISRFunc(LOC_pISRFuncParameters);
+	//enuSetInterruptMode(0,TIMER_POLLING);
+
+}
+
+void __vector_11(void){
+
+
+	LOC_u16OVF--;
+	if(LOC_u16OVF == 0){
+		LOC_pISRFunc(NULL);
+		//enuSetInterruptMode(0,TIMER_POLLING);
+		//TIMER_TCNT0 = preload;
+		//Local_u16OVF = counts;
+
+
+	}
+}

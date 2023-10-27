@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Rename resource &apos;Amit_AVR_Work/HAL/Keypad&apos; to &apos;Keyp&apos;" description="Rename resource &apos;Keypad&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="HAL/Keypad" name="Keyp" stamp="1696251589968" updateReferences="true"/>&#x0A;<refactoring comment="Rename resource &apos;Amit_AVR_Work/HAL/Keyp&apos; to &apos;Keypad&apos;" description="Rename resource &apos;Keyp&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="HAL/Keyp" name="Keypad" stamp="1696254514244" updateReferences="true"/>
+</session>

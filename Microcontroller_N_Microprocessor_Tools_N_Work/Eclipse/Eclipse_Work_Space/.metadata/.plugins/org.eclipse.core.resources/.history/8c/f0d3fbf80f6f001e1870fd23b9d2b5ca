@@ -1,0 +1,75 @@
+/*
+ * TIMER_priv.h
+ *
+ *  Created on: Oct 15, 2023
+ *      Author: Omar Gamal El-Kady
+ */
+
+#ifndef MCAL_TIMER_TIMER_PRIV_H_
+#define MCAL_TIMER_TIMER_PRIV_H_
+
+#define TIMER_INT0      0
+#define TIMER_INT1      1
+#define TIMER_INT2      2
+
+
+// timer0
+#define TIMER_TCCR0      *((volatile u8 *)0x53)
+#define TIMER_TCNT0      *((volatile u8 *)0x52)
+#define TIMER_OCR0       *((volatile u8 *)0x5C)
+
+
+// timer2
+#define TIMER_TCCR2      *((volatile u8 *)0x45)
+#define TIMER_TCNT2      *((volatile u8 *)0x44)
+#define TIMER_OCR2       *((volatile u8 *)0x43)
+
+#define TIMER_TIMSK      *((volatile u8 *)0x59)
+#define TIMER_TIFR       *((volatile u8 *)0x58)
+
+#define TIMER0_WAVEFORM_GEN_MODE_NORMAL         0
+#define TIMER0_WAFEFORM_GEN_MODE_PWM            1
+#define TIMER0_WAFEFORM_GEN_MODE_CTC            2
+#define TIMER0_WAFEFORM_GEN_MODE_FASTPWM        3
+
+#define TIMER0_COMP_OUTPUT_NON_PWM_NORMAL       0
+#define TIMER0_COMP_OUTPUT_NON_PWM_TOGGLE_OC2   1
+#define TIMER0_COMP_OUTPUT_NON_PWM_CLEAR_OC2    2
+#define TIMER0_COMP_OUTPUT_NON_PWM_SET_OC2      3
+
+#define TIMER0_COMP_OUTPUT_PWM_NORMAL           0
+#define TIMER0_COMP_OUTPUT_PWM_RESERVED         1
+#define TIMER0_COMP_OUTPUT_PWM_CLEAR_OC2        2
+#define TIMER0_COMP_OUTPUT_PWM_SET_OC2          3
+
+#define TIMER0_COMP_OUTPUT_FASTPWM_NORMAL       0
+#define TIMER0_COMP_OUTPUT_FASTPWM_RESERVED     1
+#define TIMER0_COMP_OUTPUT_FASTPWM_CLEAR_OC2    2
+#define TIMER0_COMP_OUTPUT_FASTPWM_SET_OC2      3
+
+#define TIMER0_NO_CLK_SOURCE                    0
+#define TIMER0_PRESCALER_1                      1
+#define TIMER0_PRESCALER_8                      2
+#define TIMER0_PRESCALER_64                     3
+#define TIMER0_PRESCALER_256                    4
+#define TIMER0_PRESCALER_1024                   5
+#define TIMER0_EXT_CLK_FALLING                  6
+#define TIMER0_EXT_CLK_RISING                   7
+
+#define TIMER_POLLING     90
+#define TIMER_INTERRUPT   91
+#define TIMER_OVFINT      92
+#define TIMER_OCINT       93
+
+static ES_t enuSetWaveGenMode(u8 Copy_u8IntPin , u8 Copy_u8IntMode);
+static ES_t enuSetPrescaler(u8 Copy_u8IntPin , u8 Copy_u8Prescaler);
+static ES_t enuSetCompOutputMode(u8 Copy_u8IntPin , u8 Copy_u8CompMode);
+static ES_t enuSetCompNonPWMMode(u8 Copy_u8IntPin , u8 Copy_u8Mode);
+static ES_t enuSetInterruptMode(u8 Copy_u8IntPin , u8 Copy_u8IntMode);
+
+typedef void(*pfuncISRFunc_t)(void*);
+typedef void* vidptr_t;
+
+static u16 LOC_au16PrescalerValues[] = {1,8,64,256,1024};
+
+#endif /* MCAL_TIMER_TIMER_PRIV_H_ */
